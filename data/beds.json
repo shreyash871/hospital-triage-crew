@@ -1,0 +1,7 @@
+{
+  "EMERGENCY": {"total": 12, "occupied": 11},
+  "CARDIOLOGY": {"total": 20, "occupied": 18},
+  "GENERAL_MEDICINE": {"total": 40, "occupied": 25},
+  "PEDIATRICS": {"total": 15, "occupied": 7},
+  "ORTHOPEDICS": {"total": 18, "occupied": 18}
+}

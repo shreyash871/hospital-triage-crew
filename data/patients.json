@@ -1,0 +1,38 @@
+[
+  {
+    "patient_id": "P1001",
+    "name": "Ramesh Kumar",
+    "age": 67,
+    "phone": "9845012345",
+    "known_conditions": ["hypertension", "type 2 diabetes"],
+    "last_visit": "2026-07-14",
+    "primary_department": "CARDIOLOGY"
+  },
+  {
+    "patient_id": "P1002",
+    "name": "Anita Sharma",
+    "age": 34,
+    "phone": "9845067890",
+    "known_conditions": [],
+    "last_visit": "2026-09-02",
+    "primary_department": "GENERAL_MEDICINE"
+  },
+  {
+    "patient_id": "P1003",
+    "name": "Vikram Rao",
+    "age": 8,
+    "phone": "9845011122",
+    "known_conditions": ["asthma"],
+    "last_visit": "2026-08-21",
+    "primary_department": "PEDIATRICS"
+  },
+  {
+    "patient_id": "P1004",
+    "name": "Fatima Begum",
+    "age": 52,
+    "phone": "9845033344",
+    "known_conditions": ["osteoarthritis"],
+    "last_visit": "2026-06-30",
+    "primary_department": "ORTHOPEDICS"
+  }
+]

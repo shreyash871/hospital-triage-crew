@@ -1,0 +1,27 @@
+[
+  {
+    "id": "M01",
+    "text": "my father has chest pain since morning and his left arm feels numb, can we come today",
+    "expected_urgency": "EMERGENCY"
+  },
+  {
+    "id": "M02",
+    "text": "Hi, I'm Anita Sharma, patient P1002. I've had a mild cough for about a week. Would like an appointment sometime next week.",
+    "expected_urgency": "ROUTINE"
+  },
+  {
+    "id": "M03",
+    "text": "my son vikram is 8 and his asthma is acting up, breathing is a bit fast since last night",
+    "expected_urgency": "URGENT"
+  },
+  {
+    "id": "M04",
+    "text": "knee has been hurting for 3 months, getting worse when climbing stairs. want to see a bone doctor",
+    "expected_urgency": "ROUTINE"
+  },
+  {
+    "id": "M05",
+    "text": "need appointment",
+    "expected_urgency": "ROUTINE"
+  }
+]

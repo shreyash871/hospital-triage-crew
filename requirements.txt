@@ -1,0 +1,5 @@
+crewai==0.95.0
+langchain-groq==0.2.1
+pydantic==2.9.2
+python-dotenv==1.0.1
+rich==13.9.4

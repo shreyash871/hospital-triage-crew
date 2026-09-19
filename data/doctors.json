@@ -1,0 +1,32 @@
+[
+  {
+    "doctor_id": "D01",
+    "name": "Dr. Meera Iyer",
+    "department": "CARDIOLOGY",
+    "available_slots": ["2026-09-20 10:00", "2026-09-20 15:30"]
+  },
+  {
+    "doctor_id": "D02",
+    "name": "Dr. Arjun Nair",
+    "department": "CARDIOLOGY",
+    "available_slots": []
+  },
+  {
+    "doctor_id": "D03",
+    "name": "Dr. Sunita Reddy",
+    "department": "GENERAL_MEDICINE",
+    "available_slots": ["2026-09-20 09:00", "2026-09-20 11:30", "2026-09-21 14:00"]
+  },
+  {
+    "doctor_id": "D04",
+    "name": "Dr. Kiran Joshi",
+    "department": "PEDIATRICS",
+    "available_slots": ["2026-09-20 16:00"]
+  },
+  {
+    "doctor_id": "D05",
+    "name": "Dr. Rahul Menon",
+    "department": "ORTHOPEDICS",
+    "available_slots": ["2026-09-21 10:30", "2026-09-21 12:00"]
+  }
+]
