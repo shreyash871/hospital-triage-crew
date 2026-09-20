@@ -3,107 +3,99 @@ from src.agents import intake_agent, triage_agent, resolver_agent, auditor_agent
 from src.schemas import ParsedIntake, TriageDecision, ResolutionPlan, AuditResult
 
 
-def build_tasks(raw_message: str):
+def build_intake_tasks(raw_message: str):
 
     intake_task = Task(
         description=(
             "Parse this raw patient message into structured fields.\n\n"
             f"MESSAGE:\n\"{raw_message}\"\n\n"
             "Rules:\n"
-            "- Copy the concern in the sender's own words. Do not rephrase it "
-            "into medical terms.\n"
-            "- If a patient ID (format P####) is present, use the "
-            "lookup_patient tool to confirm it. If no ID is present, do NOT "
-            "use the tool.\n"
+            "- Copy the concern in the sender's own words.\n"
             "- Leave any field empty if the message does not state it. Never "
             "invent a name, ID, age or symptom.\n"
+            "- patient_name is only for the PATIENT's name, and only if the "
+            "message names them explicitly.\n"
             "- In red_flag_terms, list any phrase suggesting a possible "
-            "emergency (e.g. chest pain, numbness, difficulty breathing, "
-            "bleeding, loss of consciousness). Extract the phrases only — do "
-            "not judge how serious they are."
+            "emergency (chest pain, numbness, difficulty breathing, bleeding, "
+            "loss of consciousness). Extract phrases only — do not judge them.\n"
         ),
-        expected_output=(
-            "A ParsedIntake object. Every field present in the message is "
-            "filled; every field absent from it is null or an empty list."
-        ),
+        expected_output="A ParsedIntake object with absent fields left null.",
         agent=intake_agent,
         output_pydantic=ParsedIntake,
     )
 
     triage_task = Task(
         description=(
-            "Assign an urgency level and a department based on the parsed "
-            "intake.\n\n"
+            "Assign an urgency level and a department.\n\n"
             "Rules:\n"
-            "- If red_flag_terms is non-empty, urgency is at minimum URGENT.\n"
-            "- Chest pain, numbness, difficulty breathing, loss of "
-            "consciousness or heavy bleeding means EMERGENCY.\n"
-            "- If key information is missing or the case is ambiguous, do NOT "
-            "classify it ROUTINE.\n"
-            "- Set requires_human_review to true for anything that is not "
-            "clearly ROUTINE.\n"
-            "- In reasoning, state which specific words in the message drove "
-            "your decision.\n"
-            "- Route to a department: heart/chest to CARDIOLOGY, bones/joints "
-            "to ORTHOPEDICS, under-16 to PEDIATRICS, anything immediately "
-            "life-threatening to EMERGENCY, otherwise GENERAL_MEDICINE."
+            "- Chest pain, numbness, difficulty breathing, fast or laboured "
+            "breathing, loss of consciousness or heavy bleeding means "
+            "EMERGENCY. This applies even if the sender describes it mildly.\n"
+            "- Non-empty red_flag_terms means at minimum URGENT.\n"
+            "- Missing or ambiguous information is never ROUTINE.\n"
+            "- requires_human_review is true for anything not clearly ROUTINE.\n"
+            "- State which specific words drove your decision.\n"
+            "- Department: if urgency is EMERGENCY the department MUST be "
+            "EMERGENCY. Otherwise: bones/joints to ORTHOPEDICS, under-16 to "
+            "PEDIATRICS, heart/chest to CARDIOLOGY, else GENERAL_MEDICINE.\n"
+            "- The urgency value must be exactly one of these three strings: "
+            "EMERGENCY, URGENT, ROUTINE.\n"
         ),
-        expected_output=(
-            "A TriageDecision with urgency, department, reasoning that quotes "
-            "the message, and requires_human_review set."
-        ),
+        expected_output="A TriageDecision with reasoning quoting the message.",
         agent=triage_agent,
         context=[intake_task],
         output_pydantic=TriageDecision,
     )
 
+    return [intake_task, triage_task]
+
+
+def build_resolution_tasks(raw_message, intake, triage, availability, beds):
+
     resolver_task = Task(
         description=(
             "Decide the concrete action for this case.\n\n"
+            f"TRIAGE DECISION:\n{triage.model_dump_json(indent=2)}\n\n"
+            f"DOCTOR AVAILABILITY:\n{availability}\n\n"
+            f"BED CAPACITY:\n{beds}\n\n"
             "Rules:\n"
-            "- If urgency is EMERGENCY: action is ESCALATE_TO_HUMAN. Do not "
-            "book anything. Do not call the booking tool.\n"
-            "- Otherwise call get_doctor_schedule for the department.\n"
+            "- EMERGENCY means action ESCALATE_TO_HUMAN with no booking.\n"
             "- If booking_possible is false, action is ADD_TO_WAITLIST.\n"
-            "- If slots exist, pick one and call create_booking. The slot_time "
-            "must be copied exactly from the schedule result.\n"
-            "- For any inpatient concern, check bed availability first. A FULL "
-            "department means ESCALATE_TO_HUMAN.\n"
-            "- Write message_to_patient in plain language, no medical jargon, "
-            "no diagnosis, no reassurance about their condition."
+            "- If slots exist, set action BOOK_APPOINTMENT and copy a "
+            "doctor_id and slot_time EXACTLY from the availability data above. "
+            "Never invent either one.\n"
+            "- Bed status FULL means ESCALATE_TO_HUMAN.\n"
+            "- message_to_patient is plain language, no jargon, no diagnosis.\n"
         ),
-        expected_output=(
-            "A ResolutionPlan with the action taken, and either booking "
-            "details or an escalation reason."
-        ),
+        expected_output="A ResolutionPlan with the action and its details.",
         agent=resolver_agent,
-        context=[intake_task, triage_task],
         output_pydantic=ResolutionPlan,
     )
 
     audit_task = Task(
         description=(
-            "Audit the triage decision and resolution plan against the "
-            "original message.\n\n"
+            "Audit the decisions below against the original message.\n\n"
             f"ORIGINAL MESSAGE:\n\"{raw_message}\"\n\n"
-            "Check every rule:\n"
-            "1. An EMERGENCY case must have action ESCALATE_TO_HUMAN.\n"
-            "2. A non-empty red_flag_terms must produce at least URGENT.\n"
-            "3. Any booked slot_time must exist in get_doctor_schedule for "
-            "that department. Verify it with the tool.\n"
-            "4. No patient detail may appear that the original message did "
-            "not contain.\n\n"
-            "List every rule broken in violations. Set approved false if there "
-            "is even one. If urgency was set too low, put the correct value in "
-            "corrected_urgency — you may raise it, never lower it."
+            f"PARSED INTAKE:\n{intake.model_dump_json(indent=2)}\n\n"
+            f"TRIAGE DECISION:\n{triage.model_dump_json(indent=2)}\n\n"
+            f"DOCTOR AVAILABILITY:\n{availability}\n\n"
+            "Rules to check:\n"
+            "1. EMERGENCY urgency must have action ESCALATE_TO_HUMAN.\n"
+            "2. Non-empty red_flag_terms must produce at least URGENT.\n"
+            "3. EMERGENCY urgency must have department EMERGENCY.\n"
+            "4. Any slot_time must appear in the availability data above.\n"
+            "5. Every value in PARSED INTAKE must trace back to the original "
+            "message. Check only the PARSED INTAKE fields — do NOT treat "
+            "symptoms named in the reasoning text as invented details, since "
+            "reasoning often lists symptoms to explain their absence.\n\n"
+            "List every rule broken. approved is false if there is even one. "
+            "If urgency was too low, set corrected_urgency — raise only, "
+            "never lower.\n"
         ),
-        expected_output=(
-            "An AuditResult with approved, any violations found, an optional "
-            "corrected_urgency, and audit notes."
-        ),
+        expected_output="An AuditResult with violations and notes.",
         agent=auditor_agent,
-        context=[intake_task, triage_task, resolver_task],
+        context=[resolver_task],
         output_pydantic=AuditResult,
     )
 
-    return [intake_task, triage_task, resolver_task, audit_task]
+    return [resolver_task, audit_task]

@@ -9,10 +9,10 @@
     "text": "Hi, I'm Anita Sharma, patient P1002. I've had a mild cough for about a week. Would like an appointment sometime next week.",
     "expected_urgency": "ROUTINE"
   },
-  {
+   {
     "id": "M03",
     "text": "my son vikram is 8 and his asthma is acting up, breathing is a bit fast since last night",
-    "expected_urgency": "URGENT"
+    "expected_urgency": "EMERGENCY"
   },
   {
     "id": "M04",
@@ -22,6 +22,6 @@
   {
     "id": "M05",
     "text": "need appointment",
-    "expected_urgency": "ROUTINE"
+    "expected_urgency": "URGENT"
   }
 ]

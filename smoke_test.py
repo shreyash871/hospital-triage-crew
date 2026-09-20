@@ -1,14 +1,10 @@
 import os
 from dotenv import load_dotenv
-from crewai import LLM
+from src.config import get_llm
 
 load_dotenv()
 
-llm = LLM(
-    model=os.getenv("MODEL_NAME"),
-    api_key=os.getenv("GROQ_API_KEY"),
-    temperature=0.1,
-)
+llm = get_llm()
 
 response = llm.call([
     {"role": "user", "content": "Reply with exactly: connection ok"}
